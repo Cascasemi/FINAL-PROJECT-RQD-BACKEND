@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Display Tester</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .image-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .image-item {
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .image-item img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .image-name {
+            font-size: 0.9em;
+            color: #666;
+            word-break: break-all;
+        }
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <input type="text" id="folderName" placeholder="Enter folder name" value="casca1">
+            <button onclick="fetchImages()">Fetch Images</button>
+        </div>
+        <div id="status"></div>
+        <ul id="imageList" class="image-list"></ul>
+    </div>
+
+    <script>
+        async function fetchImages() {
+            const folderName = document.getElementById('folderName').value;
+            const status = document.getElementById('status');
+            const imageList = document.getElementById('imageList');
+            const baseurl = "http://localhost:5000";
+            
+            status.className = '';
+            status.textContent = 'Fetching images...';
+            imageList.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${baseurl}/folders/${folderName}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch images');
+                }
+                
+                status.className = 'success';
+                status.textContent = `Found ${data.images.length} images in ${folderName}`;
+                
+                data.images.forEach(image => {
+                    // Create list item
+                    const li = document.createElement('li');
+                    li.className = 'image-item';
+                    
+                    // Create image element
+                    const img = document.createElement('img');
+                    // Replace this URL with your Supabase URL format
+                    img.src = `https://gbqrhnlwcdhoayfopsby.supabase.co/storage/v1/object/public/images/${folderName}/${image.name}`;
+                    img.alt = image.name;
+                    
+                    // Create name label
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'image-name';
+                    nameDiv.textContent = image.name;
+                    
+                    // Add elements to list item
+                    li.appendChild(img);
+                    li.appendChild(nameDiv);
+                    imageList.appendChild(li);
+                });
+            } catch (error) {
+                status.className = 'error';
+                status.textContent = `Error: ${error.message}`;
+                console.error('Error:', error);
+            }
+        }
+
+        // Auto-fetch on page load
+        document.addEventListener('DOMContentLoaded', fetchImages);
+    </script>
+</body>
+</html>
