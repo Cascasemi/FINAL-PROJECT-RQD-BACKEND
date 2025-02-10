@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .image-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 0;
+        }
+
+        .image-item {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .image-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-container {
+            position: relative;
+            padding-top: 75%;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        .image-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .image-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .image-name {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #4b5563;
+            background: white;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="controls">
+                <input type="text" id="folderName" placeholder="Enter folder name" value="casca1">
+                <button onclick="fetchImages()">Load Images</button>
+            </div>
+            <div id="status"></div>
+        </div>
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+        </div>
+        <ul id="imageList" class="image-list"></ul>
+    </div>
+
+    <script>
+        async function fetchImages() {
+            const folderName = document.getElementById('folderName').value;
+            const status = document.getElementById('status');
+            const imageList = document.getElementById('imageList');
+            const loading = document.getElementById('loading');
+            const baseurl = "http://localhost:5000";
+            
+            status.className = '';
+            status.textContent = '';
+            imageList.innerHTML = '';
+            loading.classList.add('active');
+            
+            try {
+                const response = await fetch(`${baseurl}/folders/${folderName}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch images');
+                }
+                
+                status.className = 'success';
+                status.textContent = `Found ${data.images.length} ${data.images.length === 1 ? 'image' : 'images'} in "${folderName}"`;
+                
+                data.images.forEach(image => {
+                    const li = document.createElement('li');
+                    li.className = 'image-item';
+                    
+                    const imageContainer = document.createElement('div');
+                    imageContainer.className = 'image-container';
+                    
+                    const img = document.createElement('img');
+                    img.src = `https://gbqrhnlwcdhoayfopsby.supabase.co/storage/v1/object/public/images/${folderName}/${image.name}`;
+                    img.alt = image.name;
+                    img.loading = 'lazy';
+                    
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'image-name';
+                    nameDiv.textContent = image.name;
+                    
+                    imageContainer.appendChild(img);
+                    li.appendChild(imageContainer);
+                    li.appendChild(nameDiv);
+                    imageList.appendChild(li);
+                });
+            } catch (error) {
+                status.className = 'error';
+                status.textContent = `Error: ${error.message}`;
+                console.error('Error:', error);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Auto-fetch on page load
+        document.addEventListener('DOMContentLoaded', fetchImages);
+
+        // Add keyboard support for the input field
+        document.getElementById('folderName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchImages();
+            }
+        });
+    </script>
+</body>
+</html>
