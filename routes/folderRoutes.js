@@ -7,11 +7,9 @@ const router = express.Router();
 router.get("/folders", async (req, res) => {
     try {
         const { data, error } = await supabase.storage.from("images").list("", { limit: 1000 });
-
         if (error) throw error;
 
         const folders = [...new Set(data.map(file => file.name.split("/")[0]))];
-
         res.json({ folders });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -23,7 +21,6 @@ router.get("/folders/:folderName", async (req, res) => {
     try {
         const { folderName } = req.params;
         const { data, error } = await supabase.storage.from("images").list(folderName, { limit: 1000 });
-
         if (error) throw error;
 
         const images = data.map(file => ({
@@ -32,6 +29,30 @@ router.get("/folders/:folderName", async (req, res) => {
         }));
 
         res.json({ images });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 📌 Delete Folder
+router.delete("/folders/:folderName", async (req, res) => {
+    try {
+        const { folderName } = req.params;
+        
+        // List all files inside the folder
+        const { data: files, error: listError } = await supabase.storage.from("images").list(folderName, { limit: 1000 });
+        if (listError) throw listError;
+
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: "Folder not found or already empty." });
+        }
+
+        // Delete each file inside the folder
+        const filePaths = files.map(file => `${folderName}/${file.name}`);
+        const { error: deleteError } = await supabase.storage.from("images").remove(filePaths);
+        if (deleteError) throw deleteError;
+
+        res.json({ message: `Folder '${folderName}' deleted successfully.` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
