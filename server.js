@@ -5,7 +5,7 @@ const cors = require("cors");
 const uploadRoutes = require("./routes/uploadRoutes");
 const folderRoutes = require("./routes/folderRoutes");
 const imageRoutes = require("./routes/imageRoutes");
-const addUserRoute = require("./routes/User"); // Include new route
+const addUserRoute = require("./routes/userRoutes"); // Include new route
 const authRoutes = require("./routes/auth");
 
 const app = express();
@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(uploadRoutes);
 app.use(folderRoutes);
 app.use(imageRoutes);
-app.use(UserRoute); // Add new user route
+app.use(addUserRoute); // Add new user route
 app.use(authRoutes); // Enable login route
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
